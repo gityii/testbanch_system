@@ -1,0 +1,102 @@
+1. Install
+Install via Composer
+
+composer require "codeception/codeception" --dev
+Execute it as ./vendor/bin/codecept
+
+
+
+2. Setup
+Execute:   codecept bootstrap
+This creates configuration file codeception.yml and tests directory and default test suites. Acceptance, functional, unit test suites are created as well.
+
+
+3. Create Test
+Generate your first acceptance test. Acceptance tests emulate behavior of a real user visiting your site.
+
+Execute:   codecept generate:cest acceptance First
+
+
+E:\www_codeception>codecept generate:cest acceptance First
+
+==== Redirecting to Composer-installed version in vendor/codeception ====
+Test was created in E:\www_codeception\tests\acceptance\FirstCest.php
+
+
+4. Configure Acceptance Tests
+Please make sure your local development server is running.  Put application URL into:  tests/acceptance.suite.yml 
+
+actor: AcceptanceTester
+modules:
+    enabled:
+        - PhpBrowser:
+            url: {YOUR APP'S URL}
+        - \Helper\Acceptance
+
+
+
+
+
+Writing a Sample Scenario(场景测试)
+
+created a file tests/acceptance/SigninCept.php
+
+Execute:    codecept generate:cept acceptance Signin  （为什么有的要加php？）
+
+
+===================================================================================================================================
+
+一、环境配置
+
+1. 下载 http://codeception.com/codecept.phar
+
+2. 将codecept.phar放到项目文件夹下，打开终端（我是mac机器）并cd到该文件夹执行 php codecept.phar bootstrap
+
+3. 如果suit文件改变时，一般会相应的action会实时更新，否则执行 php codecept.phar build
+
+
+二、编写/运行testcase（以acceptance tests为例）
+
+1. 新建一个testcase
+终端执行 php codecept.phar generate:cept acceptance Signin  
+
+执行上述命令的结果是在tests/acceptance/下面，新建了一个testcase class：SigninCept.php。注意这里所有的testcase class后面都会有“Cept”，“Cept”的作用是告诉codeception这是一个有效的场景，可以执行。
+
+2. 编辑testcase
+打开刚才新建的文件（我用的是phpstorm），编辑
+
+
+3. 编辑suite.yml文件
+每种actor都对应一个suite.yml文件，打开 tests/acceptance.suite.yml，修改config中的url，如下所示
+
+
+4. 运行test case
+终端执行 php codecept.phar run acceptanceSigninCept.php
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
