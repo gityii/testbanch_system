@@ -21,7 +21,7 @@ Acceptance Testing：
 Writing a Sample Scenario
 
 created a file   tests/acceptance/SigninCept.php   这个文件yii2框架里是有的，如果没有可以用下面的命令创建：
-codecept generate:cept acceptance Signin           这个命令要在根目录下执行，这里再basic目录下执行。
+codecept generate:cept acceptance Signin           这个命令要在根目录下执行，这里在basic目录下执行。
 
 
 Before we execute this test, we should make sure that the website is running on a local web server.

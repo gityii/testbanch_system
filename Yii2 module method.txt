@@ -1,0 +1,486 @@
+	
+-- Yii2 module --
+
+Config：
+configFile    required - the path to the application config file. File should be configured for test environment and return configuration array.
+entryUrl               - initial application url (default: http://localhost/index-test.php).
+entryScript            - front script title (like: index-test.php). If not set - taken from entryUrl.
+transaction            - (default: true) wrap all database connection inside a transaction and roll it back after the test. Should be disabled for acceptance testing..
+cleanup                - (default: true) cleanup fixtures after the test
+
+Parts：
+By default all available methods are loaded, but you can specify parts to select only needed actions and avoid conflicts.
+init 	  - use module only for initialization (for acceptance tests).
+orm       - include only haveRecord/grabRecord/seeRecord/dontSeeRecord actions.
+fixtures  - use fixtures inside tests with haveFixtures/grabFixture/grabFixtures actions.
+email     - include email actions seeEmailsIsSent/grabLastSentEmail/...
+
+
+三个配置的例子：
+Example (functional.suite.yml)
+
+actor: FunctionalTester
+modules:
+  enabled:
+     - Yii2:
+         configFile: 'config/test.php'
+
+
+
+Example (unit.suite.yml)
+
+actor: UnitTester
+modules:
+  enabled:
+     - Asserts
+     - Yii2:
+         configFile: 'config/test.php'
+         part: init
+
+
+
+Example (acceptance.suite.yml)
+
+actor: AcceptanceTester
+modules:
+    enabled:
+        - WebDriver:
+            url: http://127.0.0.1:8080/
+            browser: firefox
+        - Yii2:
+            configFile: 'config/test.php'
+            part: ORM # allow to use AR methods
+            transaction: false # don't wrap test in transaction
+            cleanup: false # don't cleanup the fixtures
+            entryScript: index-test.php
+
+
+
+Fixtures：
+This module allows to use fixtures inside a test. There are two options for that. Fixtures can be loaded using haveFixtures method inside a test:
+
+<?php
+$I->haveFixtures(['posts' => PostsFixture::className()]);
+
+or, if you need to load fixtures before the test, you can specify fixtures with _fixtures method of a testcase:
+<?php
+// inside Cest file or Codeception\TestCase\Unit
+public function _fixtures()
+{
+    return ['posts' => PostsFixture::className()]
+}
+
+
+《-- 什么是Fixtures？
+Fixtures是测试的重要部分，它的主要目的是把环境设置在一个已知状态，以便你在一个期待的结果上可以重复测试。YII提供了一个fixtures框架。
+一个fixture对象代表了一个测试环境的特殊的一面，是类yii\test\Fixture 或者它子类的实例化。
+A fixture may depend on other fixtures, specified via its yii\test\Fixture::$depends property.  When a fixture is being loaded, the fixtures it depends on will be automatically loaded BEFORE the fixture; and when the fixture is being unloaded, the dependent fixtures will be unloaded AFTER the fixture.
+
+定义一个夹具：
+To define a fixture, create a new class by extending yii\test\Fixture or yii\test\ActiveFixture. The former is best suited for general purpose fixtures, while the latter has enhanced features specifically designed to work with database and ActiveRecord.
+
+例子（defines a fixture about the User ActiveRecord and the corresponding user table）：
+<?php
+namespace app\tests\fixtures;
+
+use yii\test\ActiveFixture;
+
+class UserFixture extends ActiveFixture
+{
+    public $modelClass = 'app\models\User';
+}
+
+Each ActiveFixture is about preparing a DB table for testing purpose. 
+
+Note: yii\test\ActiveFixture is only suited for SQL databases. For NoSQL databases, Yii provides the following ActiveFixture classes:
+Mongo DB:        yii\mongodb\ActiveFixture
+Elasticsearch:   yii\elasticsearch\ActiveFixture (since version 2.0.2)
+
+The fixture data for an ActiveFixture fixture is usually provided in a file located at FixturePath/data/TableName.php, 
+where FixturePath stands for the directory containing the fixture class file, 
+and TableName is the name of the table associated with the fixture. 
+In the example above, the file should be @app/tests/fixtures/data/user.php.
+ The data file should return an array of data rows to be inserted into the user table. For example,
+
+<?php
+return [
+    'user1' => [
+        'username' => 'lmayert',
+        'email' => 'strosin.vernice@jerde.com',
+        'auth_key' => 'K3nF70it7tzNsHddEiq0BZ0i-OU8S3xV',
+        'password' => '$2y$13$WSyE5hHsG1rWN2jV8LRHzubilrCLI5Ev/iK0r3jRuwQEs2ldRu.a2',
+    ],
+    'user2' => [
+        'username' => 'napoleon69',
+        'email' => 'aileen.barton@heaneyschumm.com',
+        'auth_key' => 'dZlXsVnIDgIzFgX4EduAqkEPuphhOh9q',
+        'password' => '$2y$13$kkgpvJ8lnjKo8RuoR30ay.RjDf15bMcHIF7Vz1zz/6viYG5xJExU6',
+    ],
+];
+
+未完。。。。
+
+--》
+
+URL：
+This module provide to use native URL formats of Yii2 for all codeception commands that use url for work. This commands allows input like:
+
+<?php
+$I->amOnPage(['site/view','page'=>'about']);
+$I->amOnPage('index-test.php?site/index');
+$I->amOnPage('http://localhost/index-test.php?site/index');
+$I->sendAjaxPostRequest(['/user/update', 'id' => 1], ['UserForm[name]' => 'G.Hopper');
+
+
+Actions（动作）：
+
+_findElements（查找元素），使用可用的Codeception定位器定位元素类型:
+	XPath
+	CSS
+	Strict Locator
+Use it in Helpers or GroupObject or Extension classes:
+
+<?php
+$els = $this->getModule('Yii2')->_findElements('.items');
+$els = $this->getModule('Yii2')->_findElements(['name' => 'username']);
+
+$editLinks = $this->getModule('Yii2')->_findElements(['link' => 'Edit']);
+// 你可以遍历 $editLinks and check that all them have valid hrefs
+
+WebDriver module returns Facebook\WebDriver\Remote\RemoteWebElement instances
+PhpBrowser and Framework modules return  Symfony\Component\DomCrawler\Crawler instances
+
+param：   $locator
+return：  array of interactive elements
+
+
+_getResponseContent：
+返回在helpers中使用的最新响应的内容，当你想检索由其他模块请求的响应时
+
+<?php
+// in Helper class
+public function seeResponseContains($text)
+{
+   $this->assertContains($text, $this->getModule('Yii2')->_getResponseContent(), "response contains");
+}
+?>
+
+return string @throws ModuleException
+
+
+_loadPage：
+用任意请求的参数打开一个网页，在特定的步骤中测试多步阶段形式是有用的。
+<?php
+// in Helper class
+public function openCheckoutFormStep2($orderId) {
+    $this->getModule('Yii2')->_loadPage('POST', '/checkout/step2', ['order' => $orderId]);
+}
+?>
+
+param            $method
+param            $uri
+param  array     $parameters
+param  array     $files
+param  array     $server
+param  null      $content
+
+
+_request：
+发送客户端请求到后端，通过使用method, uri, parameters等。在Helpers中使用它去创建特殊的请求动作，比如存取API，返回响应体的字串。
+
+<?php
+// in Helper class
+public function createUserByApi($name) {
+    $userData = $this->getModule('Yii2')->_request('POST', '/api/v1/users', ['name' => $name]);
+    $user = json_decode($userData);
+    return $user->id;
+}
+?>
+
+不能够把响应载入模块，所以你不能和响应页（click, fill forms）交互。为了载入任意页进行交互，使用 _loadPage 方法。
+param            $method
+param            $uri
+param  array     $parameters
+param  array     $files
+param  array     $server
+param  null      $content
+return mixed|Crawler @throws ExternalUrlException @see _loadPage
+
+
+
+_savePageSource(Saves page source of to a file):
+
+$this->getModule('Yii2')->_savePageSource(codecept_output_dir().'page.html');
+
+param    $filename
+
+
+
+amHttpAuthenticated:
+Authenticates user for HTTP_AUTH
+
+param   $username
+param   $password
+
+
+
+amLoggedInAs:
+
+<?php
+// User is found by id
+$I->amLoggedInAs(1);
+
+// User object is passed as parameter
+$admin = \app\models\User::findByUsername('admin');
+$I->amLoggedInAs($admin);
+
+Authorizes user on a site without submitting login form. Use it for fast pragmatic authorization in functional tests.
+Requires user component to be enabled and configured.
+param $user @throws ModuleException
+
+
+amOnPage:
+用给定的相对URI路径打开网页
+
+<?php
+// opens front page
+$I->amOnPage('/');
+// opens /register page
+$I->amOnPage('/register');
+
+param string $page
+
+
+amOnRoute：
+跟amOnPage类似，但是接受route作为它的第一个参数，其他参数作为第二个参数
+$I->amOnRoute('site/view', ['page' => 'about']);
+
+
+attachFile：
+附加一个文件到Codeception 的_data 路径下用于文件上传。
+<?php
+// file is stored in 'tests/_data/prices.xls'
+$I->attachFile('input[@type="file"]', 'prices.xls');
+?>
+
+param     $field
+param     $filename
+
+
+checkOption：
+Ticks 是一个复选框，使用selectOption方法替代。
+
+<?php
+$I->checkOption('#agree');
+?>
+param $option
+
+
+
+
+click：
+模拟一个点击动作在链接或者按钮上通过定位器。如果定位器给定的比较模糊，那么这个页将会自动寻找匹配按钮、链接还是图片。
+第二个参数是一个上下文(CSS或XPath定位器)来缩小搜索。
+if the locator matches a button of type submit, the form will be submitted.
+
+<?php
+// simple link
+$I->click('Logout');
+// button of form
+$I->click('Submit');
+// CSS button
+$I->click('#form input[type=submit]');
+// XPath
+$I->click('//form/*[@type=submit]');
+// link in context
+$I->click('Logout', '#nav');
+// using strict locator
+$I->click(['link' => 'Login']);
+?>
+
+param    $link
+param    $context
+
+
+deleteHeader：
+删除页眉与传递的名字。后续请求将不会有删除页眉的请求。
+
+<?php
+$I->haveHttpHeader('X-Requested-With', 'Codeception');
+$I->amOnPage('test-headers.php');
+// ...
+$I->deleteHeader('X-Requested-With');
+$I->amOnPage('some-other-page.php');
+?>
+
+param string $name 删除头的名字
+
+
+dontSee：
+检查当前页是否包含指定的内容。给一个定位器作为第二个参数去匹配指定区域。
+<?php
+$I->dontSee('Login');                         // I can suppose user is already logged in
+$I->dontSee('Sign Up','h1');                  // I can suppose it's not a signup page
+$I->dontSee('Sign Up','//body/h1');           // with XPath
+$I->dontSee('Sign Up', ['css' => 'body h1']); // with strict CSS locator
+
+收索将在去掉HTML标签后进行。
+为了使用原始的源码，使用seeInSource().
+param   string    $text
+param   string    $selector optional
+
+
+dontSeeCheckboxIsChecked 方法：
+检查指定的复选框
+<?php
+$I->dontSeeCheckboxIsChecked('#agree'); // I suppose user didn't agree to terms
+$I->seeCheckboxIsChecked('#signup_form input[type=checkbox]'); // I suppose user didn't check the first checkbox in form.
+?>
+
+param   $checkbox
+
+
+dontSeeCookie 方法：
+用给定的名字检查是否有一个cookie。可以设置额外的cookie参数比如domain，path作为一个数组传给最后一个参数。
+
+param         $cookie
+param array   $params
+
+
+dontSeeCurrentUrlEquals 方法：
+检查当前URL等不等于给定的字符串，跟dontSeeInCurrentUrl不同，它是全匹配的。
+<?php
+// current url is not root
+$I->dontSeeCurrentUrlEquals('/');
+?>
+	
+param  string    $uri
+
+
+dontSeeCurrentUrlMatches：
+检查当前url是否匹配给定的正则表达式
+<?php
+// to match root url
+$I->dontSeeCurrentUrlMatches('~$/users/(\d+)~');
+?>
+
+param  string   $uri
+
+
+dontSeeElement 方法：
+检查给定页面上的元素是不可见的或不存在。你还可以指定属性的元素。
+<?php
+$I->dontSeeElement('.error');
+$I->dontSeeElement('//form/input[1]');
+$I->dontSeeElement('input', ['name' => 'login']);
+$I->dontSeeElement('input', ['value' => '123456']);
+?>
+
+param        $selector
+param array  $attributes
+
+
+dontSeeEmailIsSent 方法：
+检查是否有email发送。参数：email
+
+
+dontSeeInCurrentUrl 方法：
+检查当前的URI是否包含给定的字串。
+<?php
+$I->dontSeeInCurrentUrl('/users/');
+?>
+
+param  string    $uri
+
+
+dontSeeInField 方法：
+检查一个输入字段或文本区域是否包含给定的值。对于模糊定位器来说，将匹配由标签文本,CSS和XPath。
+ <?php
+$I->dontSeeInField('Body','Type your comment here');
+$I->dontSeeInField('form textarea[name=body]','Type your comment here');
+$I->dontSeeInField('form input[type=hidden]','hidden_value');
+$I->dontSeeInField('#searchform input','Search');
+$I->dontSeeInField('//form/*[@name=search]','Search');
+$I->dontSeeInField(['name' => 'search'], 'Search');
+?>
+
+param    $field
+param    $value
+
+
+dontSeeInFormFields 方法：
+检查 (name => value) 数组形式的参数是否设置用给定的选择器。
+<?php
+$I->dontSeeInFormFields('form[name=myform]', [
+     'input1' => 'non-existent value',
+     'input2' => 'other non-existent value',
+]);
+?>
+
+检查一个元素没有被分配一个值,这个值可以是数组。
+<?php
+$I->dontSeeInFormFields('.form-class', [
+     'fieldName' => [
+         'This value shouldn\'t be set',
+         'And this value shouldn\'t be set',
+     ],
+]);
+?>
+
+另外，复选框可以用一个boolean值来检查。
+<?php
+$I->dontSeeInFormFields('#form-id', [
+     'checkbox1' => true,        // fails if checked
+     'checkbox2' => false,       // fails if unchecked
+]);
+?>
+
+param   $formSelector
+param   $params
+
+
+
+dontSeeInSource 方法：
+检查当前页是否包含给定的字串在源码中。
+
+<?php
+$I->dontSeeInSource('<h1>Green eggs &amp; ham</h1>');
+
+param   $raw
+
+
+dontSeeInTitle 方法：
+检查页标题里面不包含给定的字串。参数： $title
+
+
+dontSeeLink 方法：
+用给定的字串检查页是否包含一个链接，如果有第二个参数，仅仅有herf属性的字串被检查。
+<?php
+$I->dontSeeLink('Logout'); // I suppose user is not logged in
+$I->dontSeeLink('Checkout now', '/store/cart.php');
+?>
+
+param string  $text
+param string  $url optional
+
+
+dontSeeOptionIsSelected 方法：
+检查给定的选项是否被选择。
+<?php
+$I->dontSeeOptionIsSelected('#form input[name=payment]', 'Visa');
+?>
+
+param   $selector
+param   $optionText
+
+
+dontSeeRecord 方法：
+检查记录是否存在数据库中。
+$I->dontSeeRecord('app\models\User', array('name' => 'davert'));
+param        $model
+param array  $attributes
+[Part] orm   
+
+未完。。。。 待续。
+
+

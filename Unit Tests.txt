@@ -1,0 +1,41 @@
+
+Creating Test：
+php codecept generate:test unit Example
+It creates a new ExampleTest file located in the tests/unit directory.
+
+you can run the newly created test with this command:
+php codecept run unit ExampleTest
+
+run the whole set of unit tests with:
+php codecept run unit
+
+
+
+
+一个具体的例子：
+
+E:\www_yii\basic>codecept generate:test unit Example
+Test was created in E:\www_yii\basic\tests\unit\ExampleTest.php
+
+
+E:\www_yii\basic>codecept run unit ExampleTest
+Codeception PHP Testing Framework v2.3.6
+Powered by PHPUnit 6.4-dev by Sebastian Bergmann and contributors.
+
+[1mUnit Tests (1) [22m------------------------------------------------------------------------
+---------
+[32;1m+[39;22m [35;1mExampleTest:[39;22m Some feature [32m(0.01s)[39m
+------------------------------------------------------------------------------------------------
+
+
+
+Time: 485 ms, Memory: 12.00MB
+
+[30;42mOK (1 test, 0 assertions)[0m
+
+E:\www_yii\basic>
+
+
+新产生的ExampleTest.php文件中，类有预定义_before和_after方法，可以使用它们在每个测试之前来创建一个测试对象,并在测试之后摧毁它。	
+
+
