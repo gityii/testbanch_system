@@ -36,6 +36,153 @@ Time: 485 ms, Memory: 12.00MB
 E:\www_yii\basic>
 
 
-新产生的ExampleTest.php文件中，类有预定义_before和_after方法，可以使用它们在每个测试之前来创建一个测试对象,并在测试之后摧毁它。	
+新产生的ExampleTest.php文件中，类有预定义_before和_after方法，可以使用它们在每个测试之前来创建一个测试对象,并在测试之后销毁它。	
+<?php
+
+class ExampleTest extends \Codeception\Test\Unit
+{
+    /**
+     * @var \UnitTester
+     */
+    protected $tester;
+
+    protected function _before()
+    {
+    }
+
+    protected function _after()
+    {
+    }
+
+    // tests
+    public function testMe()
+    {
+
+    }
+}
+
+
+可以在unit.suite.yml中为UnitTester 类选择适当的模块，如下所示：
+# Codeception Test Suite Configuration
+
+# suite for unit (internal) tests.
+actor: UnitTester
+modules:
+    enabled:
+        - Asserts
+        - \Helper\Unit
+
+
+Classical Unit Testing（在codeception中单元测试和PHPunit一样）：
+
+<?php
+class UserTest extends \Codeception\Test\Unit
+{
+    public function testValidation()
+    {
+        $user = User::create();
+
+        $user->username = null;
+        $this->assertFalse($user->validate(['username']));
+
+        $user->username = 'toolooooongnaaaaaaameeee';
+        $this->assertFalse($user->validate(['username']));
+
+        $user->username = 'davert';
+        $this->assertTrue($user->validate(['username']));
+    }
+}
+
+
+使用模块：
+在场景驱动的功能或验收测试可以访问actor类方法:
+# Codeception Test Suite Configuration
+
+# suite for unit (internal) tests.
+actor: UnitTester
+modules:
+    enabled:
+        - Asserts
+        - Db
+        - \Helper\Unit
+
+
+数据库测试：
+<?php
+function testSavingUser()
+{
+    $user = new User();
+    $user->setName('Miles');
+    $user->setSurname('Davis');
+    $user->save();
+    $this->assertEquals('Miles Davis', $user->getFullName());
+    $this->tester->seeInDatabase('users', ['name' => 'Miles', 'surname' => 'Davis']);
+}
+为了在单元测试中使能数据库功能，在unit.suite.yml中要对Db模块进行配置。具体配置见：http://codeception.com/docs/modules/Db
+
+
+跟框架进行交互：
+如果你的项目中已经使用ORM跟数据库进行交互，那么能不应该直接访问数据库。
+
+
+访问模块：
+Codeception允许您访问这个套件中的所有模块定义的属性和方法。跟使用unitTester类的目的不同，使用一个模块可以让你直接访问这个模块的所有公共属性。
+下面的例子演示了实体管理器访问Doctrine2模块:
+<?php
+/** @var Doctrine\ORM\EntityManager */
+$em = $this->getModule('Doctrine2')->em;
+
+
+BDD Specification Testing。
+
+
+
+Modules and Helpers：
+
+Codeception 使用模块化为你写测试套件去创建一个舒适的测试环境。
+所有的动作和断言可以被执行在模块中定义的类的测试对象中。通过写一个客户端模块你可以用你的动作和断言去扩展测试套件。
+
+看下面的这个测试:
+<?php
+$I = new FunctionalTester($scenario);
+$I->amOnPage('/');  //web页面可以被phpbrowser模块载入
+$I->see('Hello');
+$I->seeInDatabase('users', array('id' => 1));  //数据库断言可以使用Db 模块
+$I->seeFileFound('running.lock'); //文件状态可以用文件系统模块
+
+
+跟actor类相关的模块配置在tests/functional.suite.yml中，如下所示：
+actor: FunctionalTester
+modules:
+    enabled:
+        - PhpBrowser:
+            url: http://localhost
+        - Db:
+            dsn: "mysql:host=localhost;dbname=testdb"
+        - Filesystem
+
+FunctionalTester 类在模块中有它自己定义的方法。实际上它并不包含它们，而是更像一个代理。为了使你的IDE能够看到FunctionalTester的所有方法，需要执行一下codecept build命令。它从使能的模块中产生方法签名保存为一个特征包含在一个actor中。当前的例子会产生文件tests/support/_generated/FunctionalTesterActions.php，默认情况下，在每一次测试套件配置修改后，Codeception会重建动作。
+
+
+Standard Modules：
+Codeception有许多捆绑模块来帮助你运行不同的测试在不同的环境中。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

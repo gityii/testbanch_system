@@ -1,3 +1,6 @@
+
+一个重要的例子：http://pjokumsen.co.za/codeception-testing-with-yii-framework-2-0-day-14/
+
 E:\www_yii\basic>codecept run
 Codeception PHP Testing Framework v2.3.6
 Powered by PHPUnit 6.4-dev by Sebastian Bergmann and contributors.
